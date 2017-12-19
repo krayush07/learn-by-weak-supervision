@@ -2,12 +2,12 @@ import tensorflow as tf
 
 class CNN:
     def conv_output(self, conv_input, kernel, strides, num_filters, padding, name):
-        return self.conv_layer(conv_input, kernel, num_filters, strides, padding, name)
+        return self._conv_layer(conv_input, kernel, num_filters, strides, padding, name)
 
     def pool_output(self, pool_input, ksize, stride, padding, name):
-        return tf.nn.max_pool(pool_input, ksize, stride, padding, name='pool')
+        return tf.nn.max_pool(pool_input, ksize, stride, padding, name)
 
-    def conv_layer(self, conv_input, filter_shape, num_filters, stride, padding, name):
+    def _conv_layer(self, conv_input, filter_shape, num_filters, stride, padding, name):
         with tf.variable_scope(name) as scope:
             try:
                 weights = tf.get_variable(name='weights', shape=filter_shape, regularizer=tf.contrib.layers.l2_regularizer(scale=0.01),

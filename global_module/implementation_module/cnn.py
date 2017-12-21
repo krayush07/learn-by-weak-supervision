@@ -5,7 +5,7 @@ class CNN:
         return self._conv_layer(conv_input, kernel, num_filters, strides, padding, name)
 
     def pool_output(self, pool_input, ksize, stride, padding, name):
-        return tf.nn.max_pool(pool_input, ksize, stride, padding, name)
+        return tf.nn.max_pool(pool_input, ksize, stride, padding, name=name)
 
     def _conv_layer(self, conv_input, filter_shape, num_filters, stride, padding, name):
         with tf.variable_scope(name) as scope:

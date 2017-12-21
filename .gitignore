@@ -1,2 +1,4 @@
 .idea
 *.pyc
+global_module/utility_codes
+global_module/utility_dir

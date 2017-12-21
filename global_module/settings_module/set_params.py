@@ -1,4 +1,4 @@
-class ParamsClass():
+class ParamsClass:
     def __init__(self, mode='TR'):
         """
         :param mode: 'TR' for train, 'TE' for test, 'VA' for valid
@@ -30,13 +30,10 @@ class ParamsClass():
         self.MAX_SEQ_LEN = 120
         self.EMB_DIM = 300
         self.NUM_CONTEXT = 4
-        self.MAX_CTX_UTT_LENGTH = 145
-        self.MAX_RESP_UTT_LENGTH = 145
-        self.RNN_HIDDEN_DIM = 128
+        self.MAX_LEN = 145
 
-        self.rnn = 'lstm'
-        self.USE_SAME_CELL = False
-        self.train_op = 'sgd'
+        self.cnf_optimizer = 'sgd'
+        self.tar_optimizer = 'sgd'
 
         self.batch_size = 32
         self.vocab_size = 30
@@ -47,7 +44,7 @@ class ParamsClass():
 
         self.indices = None
         self.num_instances = None
-        self.num_classes = None
+        self.num_classes = 20
         self.sampling_threshold = 2
 
         ''' PARAMS FOR CONV BLOCK '''
@@ -56,7 +53,7 @@ class ParamsClass():
         self.conv_activation = 'RELU'
         self.conv_padding = 'VALID'
 
-        self.pool_width = [10]
-        self.pool_stride = [3]
+        self.pool_width = 10
+        self.pool_stride = 3
         self.pool_padding = 'VALID'
         self.pool_option = 'MAX'

@@ -22,8 +22,8 @@ class RepLayer:
             pool_output = []
             for i in range(len(filter_width)):
                 kernel = [filter_width[i], 300, 1, num_filters]
-                curr_convolution_output = self.cnn.conv_output(conv_input, kernel, conv_stride, num_filters, conv_padding, 'conv' + str(i))
-                curr_pool_output = self.cnn.pool_output(curr_convolution_output, ksize, pool_stride, pool_padding, 'pool' + str(i))
+                curr_convolution_output = self.cnn.conv_output(conv_input, kernel, conv_stride, num_filters, conv_padding, 'conv0_filter' + str(i))
+                curr_pool_output = self.cnn.pool_output(curr_convolution_output, ksize, pool_stride, pool_padding, 'pool0_filter' + str(i))
                 pool_output.append(curr_pool_output)
             concatenated_pool_output = tf.concat(pool_output, axis=1)
             return tf.reshape(concatenated_pool_output, shape=[-1, concatenated_pool_output.shape.dims[1].value * concatenated_pool_output.shape.dims[3].value])

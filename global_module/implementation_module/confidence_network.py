@@ -4,10 +4,11 @@ from global_module.settings_module import ParamsClass, Directory
 
 
 class ConfidenceNetwork:
-    def __init__(self, num_classes, optimizer=None, max_grad_norm=5):
+    def __init__(self, num_classes, optimizer, max_grad_norm=5, reg_const = 0.001):
         self.num_classes = num_classes
         self.optimizer = optimizer
         self.max_grad_norm = max_grad_norm
+        self.reg_const = reg_const
 
     def compute_confidence(self, feature_input, num_layers):
         with tf.variable_scope('fc_layer1'):
@@ -47,12 +48,20 @@ class ConfidenceNetwork:
         loss = self.compute_loss(true_label, weak_label, final_logits)
 
         with tf.variable_scope('optimize_cnf_net'):
-            tvars = tf.trainable_variables()
-            # TODO: Check if target network params are const.
-            # TODO: Add regularization loss.
-            grads = tf.gradients(loss, tvars)
+            global_tvars = tf.trainable_variables()
+
+            # (Done) TODO: Check if target network params are const.
+            tar_net_tvars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "tar_net")
+            trainable_tvars = set(global_tvars) - set(tar_net_tvars)
+
+            # (Done) TODO: Add regularization loss.
+            l2_regularizer = tf.contrib.layers.l2_regularizer(scale=self.reg_const, scope="cnf_reg")
+            regularization_penalty = tf.contrib.layers.apply_regularization(l2_regularizer, trainable_tvars)
+            total_loss = loss + regularization_penalty
+
+            grads = tf.gradients(total_loss, global_tvars)
             grads, _ = tf.clip_by_global_norm(grads, clip_norm=self.max_grad_norm)
-            grad_var_pairs = zip(grads, tvars)
+            grad_var_pairs = zip(grads, global_tvars)
 
             if self.optimizer == 'sgd':
                 optimizer = tf.train.GradientDescentOptimizer(learning_rate=lr, name='sgd')

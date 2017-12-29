@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from global_module.settings_module import ParamsClass, Directory
+from global_module.settings_module import GlobalParams, Directory
 from global_module.implementation_module import CNN
 
 

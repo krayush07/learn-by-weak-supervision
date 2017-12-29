@@ -1,4 +1,4 @@
-class ParamsClass:
+class GlobalParams:
     def __init__(self, mode='TR'):
         """
         :param mode: 'TR' for train, 'TE' for test, 'VA' for valid
@@ -32,8 +32,7 @@ class ParamsClass:
         self.NUM_CONTEXT = 4
         self.MAX_LEN = 145
 
-        self.cnf_optimizer = 'sgd'
-        self.tar_optimizer = 'sgd'
+        self.optimizer = 'sgd'
 
         self.batch_size = 32
         self.vocab_size = 30
@@ -44,7 +43,7 @@ class ParamsClass:
 
         self.indices = None
         self.num_instances = None
-        self.num_classes = 20
+        self.num_classes = 3
         self.sampling_threshold = 2
 
         ''' PARAMS FOR CONV BLOCK '''

@@ -1,3 +1,5 @@
 from set_dir import Directory
 from set_dict import Dictionary
-from set_params import ParamsClass
+from set_params import GlobalParams
+from set_cnf_params import ConfidenceNetworkParams
+from set_tar_params import TargetNetworkParams

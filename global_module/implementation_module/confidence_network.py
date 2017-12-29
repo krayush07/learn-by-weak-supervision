@@ -1,14 +1,15 @@
 import tensorflow as tf
 
-from global_module.settings_module import ParamsClass, Directory
+from global_module.settings_module import GlobalParams, Directory
 
 
 class ConfidenceNetwork:
-    def __init__(self, num_classes, optimizer, max_grad_norm=5, reg_const = 0.001):
+    def __init__(self, num_classes, optimizer, max_grad_norm=5, reg_const=0.001):
         self.num_classes = num_classes
         self.optimizer = optimizer
         self.max_grad_norm = max_grad_norm
         self.reg_const = reg_const
+        self._lr = tf.Variable(0.01, trainable=False, name='learning_rate')
 
     def compute_confidence(self, feature_input, num_layers):
         with tf.variable_scope('fc_layer1'):
@@ -36,37 +37,49 @@ class ConfidenceNetwork:
 
         return final_logits, predicted_score
 
-    def compute_loss(self, true_label, weak_label, logits):
+    def compute_xent_loss(self, true_label, weak_label, logits):
         one_hot_true_label = tf.one_hot(true_label, self.num_classes)
         target_score = tf.subtract(tf.constant(1.), tf.reduce_mean(tf.abs(tf.subtract(one_hot_true_label, weak_label)), axis=1))
         loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.squeeze(target_score), logits=logits, name='confidence_loss')
         return loss
 
-    def train(self, feature_input, num_layers, true_label, weak_label, lr):
+    def train(self, feature_input, num_layers, true_label, weak_label):
         global optimizer
-        final_logits, confidence_score = self.compute_confidence(feature_input, num_layers)
-        loss = self.compute_loss(true_label, weak_label, final_logits)
+        trainable_tvars, total_loss = self.aggregate_loss(feature_input, num_layers, true_label, weak_label)
 
         with tf.variable_scope('optimize_cnf_net'):
-            global_tvars = tf.trainable_variables()
-
-            # (Done) TODO: Check if target network params are const.
-            tar_net_tvars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "tar_net")
-            trainable_tvars = set(global_tvars) - set(tar_net_tvars)
-
-            # (Done) TODO: Add regularization loss.
-            l2_regularizer = tf.contrib.layers.l2_regularizer(scale=self.reg_const, scope="cnf_reg")
-            regularization_penalty = tf.contrib.layers.apply_regularization(l2_regularizer, trainable_tvars)
-            total_loss = loss + regularization_penalty
-
-            grads = tf.gradients(total_loss, global_tvars)
+            grads = tf.gradients(total_loss, trainable_tvars)
             grads, _ = tf.clip_by_global_norm(grads, clip_norm=self.max_grad_norm)
-            grad_var_pairs = zip(grads, global_tvars)
+            grad_var_pairs = zip(grads, trainable_tvars)
 
             if self.optimizer == 'sgd':
-                optimizer = tf.train.GradientDescentOptimizer(learning_rate=lr, name='sgd')
+                optimizer = tf.train.GradientDescentOptimizer(learning_rate=self.lr, name='sgd')
             elif self.optimizer == 'adam':
-                optimizer = tf.train.AdamOptimizer(learning_rate=lr, name='adam')
+                optimizer = tf.train.AdamOptimizer(learning_rate=self.lr, name='adam')
             elif self.optimizer == 'adadelta':
-                optimizer = tf.train.AdadeltaOptimizer(learning_rate=lr, epsilon=1e-6, name='adadelta')
+                optimizer = tf.train.AdadeltaOptimizer(learning_rate=self.lr, epsilon=1e-6, name='adadelta')
             return optimizer.apply_gradients(grad_var_pairs, name='apply_grad')
+
+    def aggregate_loss(self, feature_input, num_layers, true_label, weak_label):
+        final_logits, confidence_score = self.compute_confidence(feature_input, num_layers)
+        loss = self.compute_xent_loss(true_label, weak_label, final_logits)
+
+        global_tvars = tf.trainable_variables()
+
+        # (Done) TODO: Check if target network params are const.
+        tar_net_tvars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, "tar_net")
+        trainable_tvars = list(set(global_tvars) - set(tar_net_tvars))
+
+        # (Done) TODO: Add regularization loss.
+        l2_regularizer = tf.contrib.layers.l2_regularizer(scale=self.reg_const, scope="cnf_reg")
+        regularization_penalty = tf.contrib.layers.apply_regularization(l2_regularizer, trainable_tvars)
+        total_loss = loss + regularization_penalty
+        self.loss = total_loss
+        return trainable_tvars, total_loss
+
+    def assign_lr(self, session, lr_value):
+        session.run(tf.assign(self.lr, lr_value))
+
+    @property
+    def lr(self):
+        return self._lr

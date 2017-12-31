@@ -5,11 +5,13 @@ from global_module.implementation_module import RepLayer, ConfidenceNetwork, Tar
 
 
 class L2LWS:
-    def __init__(self, global_params, cnf_params, tar_params, dir_obj):
+    def __init__(self, global_params, cnf_params, tar_params, dir_obj, cnf_dir_obj, tar_dir_obj):
         self.global_params = global_params
         self.cnf_params = cnf_params
         self.tar_params = tar_params
         self.dir_obj = dir_obj
+        self.cnf_dir = cnf_dir_obj
+        self.tar_dir = tar_dir_obj
         self.init_pipeline()
 
     def init_pipeline(self):
@@ -72,15 +74,16 @@ class L2LWS:
     def run_confidence_network(self):
         with tf.variable_scope('cnf_net'):
             if self.cnf_params.mode == 'TR':
-                self.cnf_network.train(self.rep_layer.create_representation(self.labeled_word_emb, self.cnf_params),
+                run_cnf = self.cnf_network.train(self.rep_layer.create_representation(self.labeled_word_emb, self.cnf_params),
                                        num_layers=3,
                                        true_label=self.gold_label,
                                        weak_label=self.weak_label_labeled)
             else:
-                self.cnf_network.aggregate_loss(self.rep_layer.create_representation(self.labeled_word_emb, self.cnf_params),
+                run_cnf, _ = self.cnf_network.aggregate_loss(self.rep_layer.create_representation(self.labeled_word_emb, self.cnf_params),
                                                 num_layers=3,
                                                 true_label=self.gold_label,
                                                 weak_label=self.weak_label_labeled)
+            self.cnf_train_op = run_cnf
 
     def init_target_network(self):
         with tf.variable_scope('tar_net'):

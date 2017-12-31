@@ -27,14 +27,13 @@ class GlobalParams:
             self.enable_shuffle = False
 
         self.REG_CONSTANT = 0.01
-        self.MAX_SEQ_LEN = 120
+        self.MAX_SEQ_LEN = 20
         self.EMB_DIM = 300
-        self.NUM_CONTEXT = 4
-        self.MAX_LEN = 145
+        self.MAX_LEN = 20
 
         self.optimizer = 'sgd'
 
-        self.batch_size = 32
+        self.batch_size = 2
         self.vocab_size = 30
         self.is_word_trainable = True
 

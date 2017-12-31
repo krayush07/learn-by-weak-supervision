@@ -8,6 +8,7 @@ class TargetNetwork:
         self.optimizer = optimizer
         self.max_grad_norm = max_grad_norm
         self.reg_const = reg_const
+        self._lr = tf.Variable(0.01, trainable=False, name='learning_rate')
 
     def predict_labels(self, feature_input, num_layers, num_classes):
         with tf.variable_scope('fc_layer1'):
@@ -42,7 +43,6 @@ class TargetNetwork:
         global optimizer
         trainable_tvars, total_loss = self.aggregate_loss(feature_input, num_layers, num_classes, confidence, weak_label)
         with tf.variable_scope('optimize_tar_net'):
-            self._lr = tf.Variable(0.01, trainable=False, name='learning_rate')
 
             grads = tf.gradients(total_loss, trainable_tvars)
             grads, _ = tf.clip_by_global_norm(grads, clip_norm=self.max_grad_norm)

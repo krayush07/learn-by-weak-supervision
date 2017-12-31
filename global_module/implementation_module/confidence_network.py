@@ -40,8 +40,12 @@ class ConfidenceNetwork:
     def compute_xent_loss(self, true_label, weak_label, logits):
         one_hot_true_label = tf.one_hot(true_label, self.num_classes)
         target_score = tf.subtract(tf.constant(1.), tf.reduce_mean(tf.abs(tf.subtract(one_hot_true_label, weak_label)), axis=1))
-        loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.squeeze(target_score), logits=logits, name='confidence_loss')
-        return loss
+        self.indiv_loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.squeeze(target_score), logits=tf.squeeze(logits), name='confidence_loss')
+        # self.tg = tf.squeeze(target_score)
+        # self.lg = tf.squeeze(logits)
+        # self.sb = tf.subtract(one_hot_true_label, weak_label)
+        # self.one_hot = one_hot_true_label
+        return self.indiv_loss
 
     def train(self, feature_input, num_layers, true_label, weak_label):
         global optimizer
@@ -62,7 +66,7 @@ class ConfidenceNetwork:
 
     def aggregate_loss(self, feature_input, num_layers, true_label, weak_label):
         final_logits, confidence_score = self.compute_confidence(feature_input, num_layers)
-        loss = self.compute_xent_loss(true_label, weak_label, final_logits)
+        loss = tf.reduce_mean(self.compute_xent_loss(true_label, weak_label, final_logits))
 
         global_tvars = tf.trainable_variables()
 
@@ -73,9 +77,9 @@ class ConfidenceNetwork:
         # (Done) TODO: Add regularization loss.
         l2_regularizer = tf.contrib.layers.l2_regularizer(scale=self.reg_const, scope="cnf_reg")
         regularization_penalty = tf.contrib.layers.apply_regularization(l2_regularizer, trainable_tvars)
-        total_loss = loss + regularization_penalty
-        self.loss = total_loss
-        return trainable_tvars, total_loss
+        # total_loss = loss + regularization_penalty
+        self.total_loss = loss + regularization_penalty
+        return trainable_tvars, self.total_loss
 
     def assign_lr(self, session, lr_value):
         session.run(tf.assign(self.lr, lr_value))

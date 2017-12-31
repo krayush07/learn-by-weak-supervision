@@ -3,3 +3,5 @@ from set_dict import Dictionary
 from set_params import GlobalParams
 from set_cnf_params import ConfidenceNetworkParams
 from set_tar_params import TargetNetworkParams
+from set_cnf_dir import ConfidenceNetworkDirectory
+from set_tar_dir import TargetNetworkDirectory

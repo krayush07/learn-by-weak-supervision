@@ -29,18 +29,20 @@ class Directory():
         self.glove_path = '/home/aykumar/aykumar_home/glove_dir' + '/glove_dict.pkl'
 
         '''Directory to dataset'''
-        self.raw_train_path = self.data_path + '/raw_tokenized_train.txt'
+        self.raw_train_path = '/raw_tokenized_train.txt'
 
-        self.data_filename = self.data_path + '/tokenized_train.txt'
-        self.label_filename = self.data_path + '/label_train.txt'
+        self.data_filename = '/tokenized_train.txt'
+        self.gold_label_filename = '/gold_label_train.txt'
+        self.weak_label_filename = '/weak_label_train.txt'
 
         if (mode == 'VA'):
-            self.data_filename = self.data_path + '/tokenized_valid.txt'
-            self.label_filename = self.data_path + '/label_valid.txt'
+            self.data_filename = '/tokenized_valid.txt'
+            self.gold_label_filename = '/gold_label_valid.txt'
+            self.weak_label_filename = '/weak_label_valid.txt'
         elif (mode == 'TE'):
-            self.data_filename = self.data_path + '/tokenized_test.txt'
-            self.label_filename = self.data_path + '/label_test.txt'
-            self.gold_data = self.data_path + '/gold_test.txt'
+            self.data_filename = '/tokenized_test.txt'
+            self.gold_label_filename = '/gold_label_test.txt'
+            self.weak_label_filename = '/weak_label_test.txt'
 
         ''' ****************** Directory to saving or loading a model ********************** '''''
         self.latest_checkpoint = 'checkpoint'

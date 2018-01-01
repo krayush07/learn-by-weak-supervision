@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class DataReader:
     def __init__(self, params):
         self.params = params
@@ -21,6 +22,21 @@ class DataReader:
 
             index_string += str(word_dict.get(each_token, word_dict.get("UNK"))) + '\t'
         return len(index_string.strip().split()), index_string.strip()
+
+    def pad_string(self, id_string, curr_len, max_seq_len):
+        id_string = id_string.strip() + '\t'
+        while curr_len < max_seq_len:
+            id_string += '0\t'
+            curr_len += 1
+        return id_string.strip()
+
+    def format_string(self, inp_string, curr_string_len, max_len):
+        if curr_string_len > max_len:
+            print('Maximum SEQ LENGTH reached. Stripping extra sequence.\n')
+            op_string = '\t'.join(inp_string.split('\t')[:max_len])
+        else:
+            op_string = self.pad_string(inp_string, curr_string_len, max_len)
+        return op_string
 
     def generate_cnf_id_map(self, data_filename, gold_label_filename, weak_label_filename, index_arr, dict_obj):
         data_file_arr = open(data_filename, 'r').readlines()
@@ -44,21 +60,6 @@ class DataReader:
 
         return global_data_arr, global_glabel_arr, global_wlabel_arr
 
-    def pad_string(self, id_string, curr_len, max_seq_len):
-        id_string = id_string.strip() + '\t'
-        while curr_len < max_seq_len:
-            id_string += '0\t'
-            curr_len += 1
-        return id_string.strip()
-
-    def format_string(self, inp_string, curr_string_len, max_len):
-        if curr_string_len > max_len:
-            print('Maximum SEQ LENGTH reached. Stripping extra sequence.\n')
-            op_string = '\t'.join(inp_string.split('\t')[:max_len])
-        else:
-            op_string = self.pad_string(inp_string, curr_string_len, max_len)
-        return op_string
-
     def generate_tar_id_map(self, data_filename, weak_label_filename, index_arr, dict_obj):
         data_file_arr = open(data_filename, 'r').readlines()
         wlabel_file_arr = open(weak_label_filename, 'r').readlines()
@@ -68,11 +69,11 @@ class DataReader:
 
         for curr_id, each_idx in enumerate(index_arr):
             curr_line = data_file_arr[each_idx].strip()
-            curr_wlabel = wlabel_file_arr[each_idx].strip().split('\t')
+            curr_wlabel = map(np.float32, wlabel_file_arr[each_idx].strip().split('\t'))
             string_len, index_string = self.get_index_string(curr_line, dict_obj.word_dict)
             curr_line_index_string = self.format_string(index_string, string_len, self.params.MAX_SEQ_LEN)  # format resp string
 
-            global_data_arr.append(curr_line_index_string)
+            global_data_arr.append(map(int, curr_line_index_string.split('\t')))
             global_wlabel_arr.append(curr_wlabel)
 
         return global_data_arr, global_wlabel_arr
@@ -108,4 +109,4 @@ class DataReader:
             curr_weak_label_arr = weak_label_arr[i * batch_size: (i + 1) * batch_size]
 
             for p in range(batch_size):
-                yield (curr_data_arr, curr_weak_label_arr)
+                yield (np.array(curr_data_arr), np.array(curr_weak_label_arr))

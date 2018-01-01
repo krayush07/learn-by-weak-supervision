@@ -91,20 +91,22 @@ class L2LWS:
 
     def run_target_network(self):
         with tf.variable_scope('cnf_net', reuse=True):
-            confidence = self.cnf_network.compute_confidence(self.rep_layer.create_representation(self.labeled_word_emb, self.global_params), 3)
+            confidence = self.cnf_network.compute_confidence(self.rep_layer.create_representation(self.unlabeled_word_emb, self.global_params), 3)
         with tf.variable_scope('tar_net'):
             if self.tar_params.mode == 'TR':
-                self.tar_network.train(self.rep_layer.create_representation(self.unlabeled_word_emb, self.global_params),
+                run_tar = self.tar_network.train(self.rep_layer.create_representation(self.unlabeled_word_emb, self.global_params),
                                        num_layers=3,
                                        num_classes=self.global_params.num_classes,
                                        confidence=confidence,
                                        weak_label=self.weak_label_unlabeled)
             else:
-                self.tar_network.aggregate_loss(self.rep_layer.create_representation(self.unlabeled_word_emb, self.global_params),
+                run_tar = self.tar_network.aggregate_loss(self.rep_layer.create_representation(self.unlabeled_word_emb, self.global_params),
                                                 num_layers=3,
                                                 num_classes=self.global_params.num_classes,
                                                 confidence=confidence,
                                                 weak_label=self.weak_label_unlabeled)
+
+            self.tar_train_op = run_tar
 
 # def main():
 #     L2LWS(GlobalParams(), ConfidenceNetworkParams(), TargetNetworkParams(), Directory('TR'))

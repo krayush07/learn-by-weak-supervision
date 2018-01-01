@@ -61,7 +61,7 @@ class Train:
         return epoch_combined_loss, min_cost
 
     def run_tar_net_epoch(self, session, min_cost, model_obj, dict_obj, epoch_num):
-        net_obj = model_obj.tar_net
+        net_obj = model_obj.tar_network
         params = model_obj.tar_params
         dir_obj = model_obj.tar_dir
         data_filename = dir_obj.data_filename
@@ -73,15 +73,16 @@ class Train:
                                                                   weak_label_filename,
                                                                   model_obj.tar_params.indices,
                                                                   dict_obj)):
-            feed_dict = {model_obj.labeled_text: data_arr,
-                         model_obj.weak_label_labeled: weak_label_arr
+            feed_dict = {model_obj.unlabeled_text: data_arr,
+                         model_obj.weak_label_unlabeled: weak_label_arr
                          }
 
-            loss, _ = session.run([net_obj.loss,
-                                   model_obj.run_confidence_network],
+            indiv_loss, total_loss, _ = session.run([net_obj.indiv_loss,
+                                   net_obj.total_loss,
+                                   model_obj.tar_train_op],
                                   feed_dict=feed_dict)
 
-            epoch_combined_loss += loss
+            epoch_combined_loss += total_loss
 
         print 'Epoch Num: %d, CE loss: %.4f' % (epoch_num, epoch_combined_loss)
 
@@ -144,7 +145,7 @@ class Train:
             random.shuffle(tar_params_train.indices)
             random.shuffle(tar_params_valid.indices)
 
-        min_loss = sys.float_info.max
+        cnf_min_loss = tar_min_loss = sys.float_info.max
 
         word_emb_path = global_dir.word_embedding
         word_emb_matrix = np.float32(np.genfromtxt(word_emb_path, delimiter=' '))
@@ -207,20 +208,50 @@ class Train:
                 print('\n++++++++=========+++++++\n')
 
                 # print("Epoch: %d Learning rate: %.5f" % (i + 1, session.run(train_obj.lr)))
-                train_loss, _ = self.run_cnf_net_epoch(session, min_loss, train_obj, dict_obj, i)
-                print("Epoch: %d Train loss: %.3f" % (i + 1, train_loss))
+                train_loss, _ = self.run_cnf_net_epoch(session, cnf_min_loss, train_obj, dict_obj, i)
+                print("CONFIDENCE NETWORK: Epoch: %d Train loss: %.3f\n" % (i + 1, train_loss))
 
                 valid_obj.cnf_network.assign_lr(session, cnf_params_train.learning_rate * lr_decay)
                 valid_obj.tar_network.assign_lr(session, cnf_params_train.learning_rate * lr_decay)
 
-                valid_loss, curr_loss = self.run_cnf_net_epoch(session, min_loss, valid_obj, dict_obj, i)
-                if curr_loss < min_loss:
-                    min_loss = curr_loss
+                valid_loss, curr_loss = self.run_cnf_net_epoch(session, cnf_min_loss, valid_obj, dict_obj, i)
+                if curr_loss < cnf_min_loss:
+                    cnf_min_loss = curr_loss
 
-                print("Epoch: %d Valid loss: %.3f" % (i + 1, valid_loss))
+                print("CONFIDENCE NETWORK: Epoch: %d Valid loss: %.3f" % (i + 1, valid_loss))
 
                 curr_time = time.time()
                 print('1 epoch run takes ' + str(((curr_time - start_time) / (i + 1)) / 60) + ' minutes.')
+
+
+
+                ''' TARGET NETWORK '''
+
+                lr_decay = tar_params_train.lr_decay ** max(i - global_params.max_epoch, 0.0)
+                train_obj.cnf_network.assign_lr(session, cnf_params_train.learning_rate * lr_decay)
+                train_obj.tar_network.assign_lr(session, cnf_params_train.learning_rate * lr_decay)
+
+                # print(params_train.learning_rate * lr_decay)
+
+                print('\n++++++++=========+++++++\n')
+
+                # print("Epoch: %d Learning rate: %.5f" % (i + 1, session.run(train_obj.lr)))
+                train_loss, _ = self.run_tar_net_epoch(session, tar_min_loss, train_obj, dict_obj, i)
+                print("TARGET NETWORK: Epoch: %d Train loss: %.3f\n" % (i + 1, train_loss))
+
+                valid_obj.cnf_network.assign_lr(session, cnf_params_train.learning_rate * lr_decay)
+                valid_obj.tar_network.assign_lr(session, cnf_params_train.learning_rate * lr_decay)
+
+                valid_loss, curr_loss = self.run_tar_net_epoch(session, tar_min_loss, valid_obj, dict_obj, i)
+                if curr_loss < tar_min_loss:
+                    tar_min_loss = curr_loss
+
+                print("TARGET NETWORK: Epoch: %d Valid loss: %.3f" % (i + 1, valid_loss))
+
+                curr_time = time.time()
+                print('1 epoch run takes ' + str(((curr_time - start_time) / (i + 1)) / 60) + ' minutes.')
+
+
 
                 # train_writer.close()
                 # valid_writer.close()

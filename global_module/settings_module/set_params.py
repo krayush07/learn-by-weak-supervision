@@ -26,7 +26,7 @@ class GlobalParams:
         if (mode == 'TE'):
             self.enable_shuffle = False
 
-        self.REG_CONSTANT = 0.01
+        self.REG_CONSTANT = 0.00
         self.MAX_SEQ_LEN = 20
         self.EMB_DIM = 300
         self.MAX_LEN = 20

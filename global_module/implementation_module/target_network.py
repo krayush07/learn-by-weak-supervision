@@ -36,8 +36,8 @@ class TargetNetwork:
 
     def compute_loss(self, logits, labels, confidence):
         loss = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=logits, name='target_loss')
-        weighted_loss = tf.multiply(confidence, loss, name='weighted_loss')
-        return weighted_loss
+        self.indiv_loss = tf.multiply(confidence, loss, name='weighted_loss')
+        return self.indiv_loss
 
     def train(self, feature_input, num_layers, num_classes, confidence, weak_label):
         global optimizer
@@ -58,7 +58,7 @@ class TargetNetwork:
 
     def aggregate_loss(self, feature_input, num_layers, num_classes, confidence, weak_label):
         final_logits = self.predict_labels(feature_input, num_layers, num_classes)
-        loss = self.compute_loss(final_logits, weak_label, confidence)
+        loss = tf.reduce_mean(self.compute_loss(final_logits, weak_label, confidence))
 
         global_tvars = tf.trainable_variables()
 
@@ -69,9 +69,8 @@ class TargetNetwork:
         # (Done) TODO: Add regularization loss.
         l2_regularizer = tf.contrib.layers.l2_regularizer(scale=self.reg_const, scope="tar_reg")
         regularization_penalty = tf.contrib.layers.apply_regularization(l2_regularizer, trainable_tvars)
-        total_loss = loss + regularization_penalty
-        self.loss = total_loss
-        return trainable_tvars, total_loss
+        self.total_loss = loss + regularization_penalty
+        return trainable_tvars, self.total_loss
 
     def assign_lr(self, session, lr_value):
         session.run(tf.assign(self.lr, lr_value))

@@ -1,4 +1,6 @@
 .idea
 *.pyc
-global_module/utility_codes
-global_module/utility_dir
+global_module/utility_codes/
+global_module/utility_dir/
+global_module/weak_annotator_module/
+global_module/pre_processing_module/

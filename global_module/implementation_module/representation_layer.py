@@ -1,6 +1,5 @@
 import tensorflow as tf
 
-from global_module.settings_module import GlobalParams, Directory
 from global_module.implementation_module import CNN
 
 
@@ -23,6 +22,11 @@ class RepLayer:
             for i in range(len(filter_width)):
                 kernel = [filter_width[i], 300, 1, num_filters]
                 curr_convolution_output = self.cnn.conv_output(conv_input, kernel, conv_stride, num_filters, conv_padding, 'conv0_filter' + str(i))
+
+                if params.if_pool_max:
+                    pool_width = curr_convolution_output.shape[1].value
+                    ksize = [1, pool_width, 1, 1]
+
                 curr_pool_output = self.cnn.pool_output(curr_convolution_output, ksize, pool_stride, pool_padding, 'pool0_filter' + str(i))
                 pool_output.append(curr_pool_output)
             concatenated_pool_output = tf.concat(pool_output, axis=1)

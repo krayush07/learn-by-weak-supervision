@@ -9,6 +9,7 @@ class ConfidenceNetworkDirectory(Directory):
         self.data_path += '/cnf'
 
         ''' DATASET '''
+        self.raw_data_filename = self.data_path + self.raw_data_filename
         self.data_filename = self.data_path + self.data_filename
         self.gold_label_filename = self.data_path + self.gold_label_filename
         self.weak_label_filename = self.data_path + self.weak_label_filename
